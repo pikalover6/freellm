@@ -102,26 +102,14 @@ export interface ModelsResponse {
   data: ModelObject[];
 }
 
-// ── BYOK: per-request user-supplied API keys ─────────────────────────────
-// Users pass these via request headers (e.g. X-FreeLLM-Groq-Key).
-// When present they are used instead of the shared server-side key, giving
-// the user their own rate-limit quota at the upstream provider.
-export interface UserKeys {
-  groq?: string;
-  cerebras?: string;
-  google?: string;
-  openrouter?: string;
-  cohere?: string;
-}
-
-// ── Cloudflare Workers environment bindings ───────────────────────────────
+// Cloudflare Workers environment bindings
 export interface Env {
   // Workers AI binding (always available — no key needed)
   AI: Ai;
-  // KV namespace for per-user rate limit counters
+  // KV namespace for per-IP rate limit counters
   RATE_LIMITS: KVNamespace;
   // Shared provider API keys (set via `wrangler secret put`).
-  // Users can override these per-request with X-FreeLLM-*-Key headers.
+  // All are optional — providers without a key are skipped and the next fallback is tried.
   GROQ_API_KEY?: string;
   CEREBRAS_API_KEY?: string;
   GOOGLE_API_KEY?: string;
@@ -129,6 +117,7 @@ export interface Env {
   COHERE_API_KEY?: string;
   // Optional: protect your deployment — only accepts requests with this bearer token
   FREELLM_API_KEY?: string;
-  // Per-user rate limit when using shared keys (requests per minute, default 10)
+  // Per-IP rate limit (requests per minute) applied when using shared keys.
+  // Default: 20. Set to "0" to disable.
   SHARED_KEY_RPM_LIMIT?: string;
 }

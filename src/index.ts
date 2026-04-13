@@ -7,6 +7,7 @@ import type {
 } from "./types.js";
 import { MODEL_MAP, getModelList } from "./models.js";
 import type { ProviderModel } from "./models.js";
+import { checkRateLimit } from "./rate-limiter.js";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -26,6 +27,16 @@ export default {
         return corsResponse(jsonError("Invalid API key", "invalid_api_key", 401));
       }
     }
+
+    // ── Per-IP rate limiting ──────────────────────────────────────────────
+    // Prevents a single caller from exhausting the shared upstream quotas.
+    // Limit is configurable via the SHARED_KEY_RPM_LIMIT env var (default 20/min).
+    const clientIP =
+      request.headers.get("CF-Connecting-IP") ??
+      request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ??
+      "unknown";
+    const rateLimitError = await checkRateLimit(clientIP, env);
+    if (rateLimitError) return rateLimitError;
 
     // ── Routes ────────────────────────────────────────────────────────────
     if (path === "/" || path === "/health") {
@@ -244,6 +255,10 @@ function corsResponse(response: Response): Response {
   headers.set("Access-Control-Allow-Origin", "*");
   headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  headers.set(
+    "Access-Control-Expose-Headers",
+    "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After"
+  );
   return new Response(response.body, {
     status: response.status,
     headers,

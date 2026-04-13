@@ -6,20 +6,26 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
-# Cloudflare Workers AI binding (for fallback)
+# Cloudflare Workers AI binding — always available, no key needed
 [[ai]]
 binding = "AI"
 
-# KV namespace for rate limit tracking
+# KV namespace for per-IP rate limiting
+# Create with: npx wrangler kv namespace create RATE_LIMITS
 [[kv_namespaces]]
 binding = "RATE_LIMITS"
 id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 preview_id = "REPLACE_WITH_YOUR_KV_NAMESPACE_PREVIEW_ID"
 
-# Environment variables — set these with `wrangler secret put <KEY>`
-# GROQ_API_KEY         - from https://console.groq.com
-# CEREBRAS_API_KEY     - from https://cloud.cerebras.ai
-# GOOGLE_API_KEY       - from https://aistudio.google.com
-# OPENROUTER_API_KEY   - from https://openrouter.ai
-# COHERE_API_KEY       - from https://cohere.com
-# FREELLM_API_KEY      - optional auth key to protect your deployment
+# Optional operator secrets — set with `wrangler secret put <KEY>`
+# These unlock higher-quality upstream providers. All are optional:
+# without any secrets, requests fall through to Cloudflare Workers AI.
+#
+# GROQ_API_KEY        - https://console.groq.com        (free, instant signup)
+# CEREBRAS_API_KEY    - https://cloud.cerebras.ai       (free, instant signup)
+# GOOGLE_API_KEY      - https://aistudio.google.com     (free, instant signup)
+# OPENROUTER_API_KEY  - https://openrouter.ai           (free, instant signup)
+# COHERE_API_KEY      - https://cohere.com              (free, instant signup)
+#
+# FREELLM_API_KEY     - optional: require callers to send this as a Bearer token
+# SHARED_KEY_RPM_LIMIT - per-IP requests/minute limit (default: 20, set to 0 to disable)
