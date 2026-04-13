@@ -1,7 +1,9 @@
-import type { ChatCompletionRequest, ChatCompletionResponse, ChatCompletionChunk, Env } from "../types.js";
+import type { ChatCompletionRequest, ChatCompletionResponse, ChatCompletionChunk, Env, UserKeys } from "../types.js";
 
 export interface ProviderOptions {
   env: Env;
+  /** Per-request BYOK keys supplied by the caller via X-FreeLLM-*-Key headers. */
+  userKeys: UserKeys;
   request: ChatCompletionRequest;
   model: string;
 }
@@ -17,9 +19,10 @@ export interface Provider {
    */
   stream(opts: ProviderOptions): Promise<ReadableStream>;
   /**
-   * Check if this provider is available (has required API keys, etc.)
+   * Check if this provider is available for a given request.
+   * Returns true if either a user-supplied BYOK key or a shared server key is present.
    */
-  isAvailable(env: Env): boolean;
+  isAvailable(env: Env, userKeys: UserKeys): boolean;
 }
 
 /**

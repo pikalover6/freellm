@@ -1,4 +1,4 @@
-import type { ChatCompletionRequest, ChatCompletionResponse, Env } from "../types.js";
+import type { ChatCompletionRequest, ChatCompletionResponse, Env, UserKeys } from "../types.js";
 import type { Provider, ProviderOptions } from "./base.js";
 import { generateId, openAICompatibleFetch, buildSSEStream } from "./base.js";
 
@@ -19,13 +19,13 @@ const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 export class GroqProvider implements Provider {
   name = "groq";
 
-  isAvailable(env: Env): boolean {
-    return Boolean(env.GROQ_API_KEY);
+  isAvailable(env: Env, userKeys: UserKeys): boolean {
+    return Boolean(userKeys.groq ?? env.GROQ_API_KEY);
   }
 
   async complete(opts: ProviderOptions): Promise<ChatCompletionResponse> {
-    const { env, request, model } = opts;
-    const apiKey = env.GROQ_API_KEY!;
+    const { env, userKeys, request, model } = opts;
+    const apiKey = (userKeys.groq ?? env.GROQ_API_KEY)!;
 
     const body = buildGroqBody(request, model, false);
     const res = await openAICompatibleFetch(GROQ_API_URL, apiKey, body);
@@ -42,8 +42,8 @@ export class GroqProvider implements Provider {
   }
 
   async stream(opts: ProviderOptions): Promise<ReadableStream> {
-    const { env, request, model } = opts;
-    const apiKey = env.GROQ_API_KEY!;
+    const { env, userKeys, request, model } = opts;
+    const apiKey = (userKeys.groq ?? env.GROQ_API_KEY)!;
 
     const body = buildGroqBody(request, model, true);
     const res = await openAICompatibleFetch(GROQ_API_URL, apiKey, body);
