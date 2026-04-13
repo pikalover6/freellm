@@ -1,0 +1,28 @@
+{
+  "name": "freellm",
+  "version": "1.0.0",
+  "description": "A unified, free API for LLMs built on Cloudflare Workers",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "type-check": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pikalover6/freellm.git"
+  },
+  "keywords": ["llm", "api", "cloudflare", "workers", "free"],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pikalover6/freellm/issues"
+  },
+  "homepage": "https://github.com/pikalover6/freellm#readme",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260413.1",
+    "typescript": "^6.0.2",
+    "wrangler": "^4.82.1"
+  }
+}
