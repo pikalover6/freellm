@@ -117,7 +117,7 @@ export interface Env {
   COHERE_API_KEY?: string;
   // Optional: protect your deployment — only accepts requests with this bearer token
   FREELLM_API_KEY?: string;
-  // Per-IP rate limit (requests per minute) applied when using shared keys.
+  // Per-IP rate limit (requests per minute) — each caller gets their own independent window.
   // Default: 20. Set to "0" to disable.
-  SHARED_KEY_RPM_LIMIT?: string;
+  RPM_LIMIT_PER_IP?: string;
 }

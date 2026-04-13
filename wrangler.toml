@@ -28,4 +28,4 @@ preview_id = "REPLACE_WITH_YOUR_KV_NAMESPACE_PREVIEW_ID"
 # COHERE_API_KEY      - https://cohere.com              (free, instant signup)
 #
 # FREELLM_API_KEY     - optional: require callers to send this as a Bearer token
-# SHARED_KEY_RPM_LIMIT - per-IP requests/minute limit (default: 20, set to 0 to disable)
+# RPM_LIMIT_PER_IP - per-IP requests/minute limit — each caller gets their own window (default: 20, set to 0 to disable)

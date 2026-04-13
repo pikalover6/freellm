@@ -29,8 +29,8 @@ export default {
     }
 
     // ── Per-IP rate limiting ──────────────────────────────────────────────
-    // Prevents a single caller from exhausting the shared upstream quotas.
-    // Limit is configurable via the SHARED_KEY_RPM_LIMIT env var (default 20/min).
+    // Each caller IP gets its own independent sliding window — not a shared pool.
+    // Configurable via RPM_LIMIT_PER_IP env var (default 20/min, 0 to disable).
     const clientIP =
       request.headers.get("CF-Connecting-IP") ??
       request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ??

@@ -67,7 +67,7 @@ npx wrangler secret put FREELLM_API_KEY      # any string — callers must send 
 Optionally, adjust the per-IP rate limit (default: 20 req/min):
 
 ```sh
-npx wrangler secret put SHARED_KEY_RPM_LIMIT  # e.g. "30"  (set to "0" to disable)
+npx wrangler secret put RPM_LIMIT_PER_IP         # e.g. "30" — each IP gets its own independent window (set to "0" to disable)
 ```
 
 ### 4. Deploy
@@ -151,7 +151,7 @@ FreeLLM stays within the free tiers of all providers. Each provider enforces its
 - **Cohere**: 1,000 req/month
 - **Cloudflare Workers AI**: 10,000 neurons/day
 
-FreeLLM also enforces an internal **per-IP sliding-window rate limit** (default: 20 req/min) to prevent any single caller from exhausting the shared upstream quotas. When a provider is rate-limited, the request automatically falls back to the next provider in the chain.
+FreeLLM also enforces an internal **per-IP rate limit** (default: 20 req/min). Each caller gets their own completely independent sliding window in KV — one heavy user cannot affect anyone else's quota. When a provider is rate-limited upstream, the request automatically falls back to the next provider in the chain.
 
 > ⚠️ Please don't abuse these free services. See https://github.com/cheahjs/free-llm-api-resources for the full list of limits.
 

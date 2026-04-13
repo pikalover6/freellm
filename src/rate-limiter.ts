@@ -20,7 +20,7 @@ export async function checkRateLimit(
   // Rate limiting disabled
   const kv = env.RATE_LIMITS;
 
-  const limitStr = env.SHARED_KEY_RPM_LIMIT ?? String(DEFAULT_RPM);
+  const limitStr = env.RPM_LIMIT_PER_IP ?? String(DEFAULT_RPM);
   const limit = parseInt(limitStr, 10);
   if (isNaN(limit) || limit <= 0) return null;
 
@@ -49,7 +49,7 @@ export async function checkRateLimit(
   timestamps = timestamps.filter((t) => t > windowStart);
 
   if (timestamps.length >= limit) {
-    const retryAfter = timestamps[0]! + WINDOW_SECONDS - now;
+    const retryAfter = Math.max(1, timestamps[0]! + WINDOW_SECONDS - now);
     return new Response(
       JSON.stringify({
         error: {
