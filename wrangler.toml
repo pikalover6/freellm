@@ -1,0 +1,31 @@
+name = "freellm"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+# Cloudflare Workers AI binding — always available, no key needed
+[[ai]]
+binding = "AI"
+
+# KV namespace for per-IP rate limiting
+# Create with: npx wrangler kv namespace create RATE_LIMITS
+[[kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_YOUR_KV_NAMESPACE_PREVIEW_ID"
+
+# Optional operator secrets — set with `wrangler secret put <KEY>`
+# These unlock higher-quality upstream providers. All are optional:
+# without any secrets, requests fall through to Cloudflare Workers AI.
+#
+# GROQ_API_KEY        - https://console.groq.com        (free, instant signup)
+# CEREBRAS_API_KEY    - https://cloud.cerebras.ai       (free, instant signup)
+# GOOGLE_API_KEY      - https://aistudio.google.com     (free, instant signup)
+# OPENROUTER_API_KEY  - https://openrouter.ai           (free, instant signup)
+# COHERE_API_KEY      - https://cohere.com              (free, instant signup)
+#
+# FREELLM_API_KEY     - optional: require callers to send this as a Bearer token
+# RPM_LIMIT_PER_IP - per-IP requests/minute limit — each caller gets their own window (default: 20, set to 0 to disable)
