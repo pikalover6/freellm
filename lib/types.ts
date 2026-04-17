@@ -102,10 +102,17 @@ export interface ModelsResponse {
   data: ModelObject[];
 }
 
+export type NoKeyProviderConfig =
+  | boolean
+  | {
+      /** Override the provider base URL (must expose OpenAI-compatible /chat/completions). */
+      baseUrl?: string;
+    };
+
 /**
  * Configuration for the FreeLLM client.
  * Provide at least one API key; providers without a key are skipped.
- * All keys can be obtained for free from the respective providers.
+ * Optionally enable no-key providers (public or local OpenAI-compatible endpoints).
  */
 export interface ClientConfig {
   /** https://console.groq.com — free, 1,000–14,400 req/day */
@@ -118,4 +125,12 @@ export interface ClientConfig {
   openrouter?: string;
   /** https://cohere.com — free, 1,000 req/month */
   cohere?: string;
+  /** https://text.pollinations.ai/openai — no key required (set true to enable) */
+  pollinations?: NoKeyProviderConfig;
+  /** http://127.0.0.1:11434/v1 — local Ollama server, no key required */
+  ollama?: NoKeyProviderConfig;
+  /** http://127.0.0.1:1234/v1 — local LM Studio server, no key required */
+  lmstudio?: NoKeyProviderConfig;
+  /** http://127.0.0.1:8080/v1 — local llama.cpp server, no key required */
+  llamacpp?: NoKeyProviderConfig;
 }

@@ -19,16 +19,29 @@
     "build": "npm run build:lib && npm run build:bundle",
     "build:lib": "tsc -p tsconfig.lib.json",
     "build:bundle": "node build.mjs",
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "type-check": "tsc --noEmit && tsc -p tsconfig.lib.json --noEmit",
-    "lint": "tsc --noEmit && tsc -p tsconfig.lib.json --noEmit"
+    "type-check": "tsc -p tsconfig.lib.json --noEmit",
+    "lint": "tsc -p tsconfig.lib.json --noEmit"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pikalover6/freellm.git"
   },
-  "keywords": ["llm", "api", "cloudflare", "workers", "free", "browser", "groq", "cerebras", "google", "openrouter", "cohere"],
+  "keywords": [
+    "llm",
+    "api",
+    "free",
+    "browser",
+    "node",
+    "groq",
+    "cerebras",
+    "google",
+    "openrouter",
+    "cohere",
+    "pollinations",
+    "ollama",
+    "lmstudio",
+    "llamacpp"
+  ],
   "author": "",
   "license": "MIT",
   "bugs": {
@@ -36,8 +49,7 @@
   },
   "homepage": "https://github.com/pikalover6/freellm#readme",
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260413.1",
-    "typescript": "^6.0.2",
-    "wrangler": "^4.82.1"
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.2"
   }
 }

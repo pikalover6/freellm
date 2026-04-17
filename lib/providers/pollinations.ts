@@ -1,43 +1,35 @@
-import type { ChatCompletionRequest, ChatCompletionResponse, Env } from "../types.js";
+import type { ChatCompletionRequest, ChatCompletionResponse } from "../types.js";
 import type { Provider, ProviderOptions } from "./base.js";
-import { generateId, openAICompatibleFetch, buildSSEStream } from "./base.js";
+import { generateId, openAICompatibleFetchNoAuth, buildSSEStream } from "./base.js";
 
-// OpenRouter free models — 20 req/min, 50 req/day (free tier)
-// https://openrouter.ai/docs
-export const OPENROUTER_MODELS = [
-  "meta-llama/llama-3.3-70b-instruct:free",
-  "google/gemma-3-27b-it:free",
-  "mistralai/mistral-small-3.1-24b-instruct:free",
-  "nousresearch/hermes-3-llama-3.1-405b:free",
-  "google/gemma-3-12b-it:free",
-  "google/gemma-3-4b-it:free",
-  "meta-llama/llama-3.2-3b-instruct:free",
+export const POLLINATIONS_DEFAULT_BASE_URL = "https://text.pollinations.ai/openai";
+
+// Pollinations free models (no API key)
+export const POLLINATIONS_MODELS = [
+  "openai",
+  "openai-fast",
+  "mistral",
+  "llama",
+  "qwen-coder",
 ] as const;
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const SITE_URL = "https://freellm.workers.dev";
-const SITE_NAME = "FreeLLM";
+export class PollinationsProvider implements Provider {
+  readonly name = "pollinations";
+  readonly #apiUrl: string;
 
-export class OpenRouterProvider implements Provider {
-  name = "openrouter";
-
-  isAvailable(env: Env): boolean {
-    return Boolean(env.OPENROUTER_API_KEY);
+  constructor(baseUrl: string = POLLINATIONS_DEFAULT_BASE_URL) {
+    const normalized = baseUrl.replace(/\/+$/, "");
+    this.#apiUrl = `${normalized}/chat/completions`;
   }
 
   async complete(opts: ProviderOptions): Promise<ChatCompletionResponse> {
-    const { env, request, model } = opts;
-    const apiKey = env.OPENROUTER_API_KEY!;
-
+    const { request, model } = opts;
     const body = buildBody(request, model, false);
-    const res = await openAICompatibleFetch(OPENROUTER_API_URL, apiKey, body, {
-      "HTTP-Referer": SITE_URL,
-      "X-Title": SITE_NAME,
-    });
+    const res = await openAICompatibleFetchNoAuth(this.#apiUrl, body);
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OpenRouter error ${res.status}: ${text}`);
+      throw new Error(`Pollinations error ${res.status}: ${text}`);
     }
 
     const data = (await res.json()) as ChatCompletionResponse;
@@ -45,19 +37,14 @@ export class OpenRouterProvider implements Provider {
     return data;
   }
 
-  async stream(opts: ProviderOptions): Promise<ReadableStream> {
-    const { env, request, model } = opts;
-    const apiKey = env.OPENROUTER_API_KEY!;
-
+  async stream(opts: ProviderOptions): Promise<ReadableStream<Uint8Array>> {
+    const { request, model } = opts;
     const body = buildBody(request, model, true);
-    const res = await openAICompatibleFetch(OPENROUTER_API_URL, apiKey, body, {
-      "HTTP-Referer": SITE_URL,
-      "X-Title": SITE_NAME,
-    });
+    const res = await openAICompatibleFetchNoAuth(this.#apiUrl, body);
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OpenRouter stream error ${res.status}: ${text}`);
+      throw new Error(`Pollinations stream error ${res.status}: ${text}`);
     }
 
     const id = generateId();

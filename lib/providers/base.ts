@@ -45,6 +45,24 @@ export async function openAICompatibleFetch(
 }
 
 /**
+ * OpenAI-compatible fetch helper for providers that do not require an API key.
+ */
+export async function openAICompatibleFetchNoAuth(
+  url: string,
+  body: Record<string, unknown>,
+  extraHeaders: Record<string, string> = {}
+): Promise<Response> {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...extraHeaders,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+/**
  * Extract the text content from a message's content field.
  */
 export function getTextContent(

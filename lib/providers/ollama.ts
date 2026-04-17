@@ -1,33 +1,35 @@
-import type { ChatCompletionRequest, ChatCompletionResponse, Env } from "../types.js";
+import type { ChatCompletionRequest, ChatCompletionResponse } from "../types.js";
 import type { Provider, ProviderOptions } from "./base.js";
-import { generateId, openAICompatibleFetch, buildSSEStream } from "./base.js";
+import { generateId, openAICompatibleFetchNoAuth, buildSSEStream } from "./base.js";
 
-// Cerebras: ultra-fast inference, 14,400 req/day
-export const CEREBRAS_MODELS = [
-  "llama-3.3-70b",    // Most capable Cerebras model
-  "llama3.1-70b",     // Llama 3.1 70B (legacy ID)
-  "llama3.1-8b",      // Fast, lightweight
+export const OLLAMA_DEFAULT_BASE_URL = "http://127.0.0.1:11434/v1";
+
+// Common Ollama model IDs (no API key)
+export const OLLAMA_MODELS = [
+  "llama3.2",
+  "qwen2.5-coder",
+  "mistral",
+  "phi3",
+  "gemma2",
 ] as const;
 
-const CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions";
+export class OllamaProvider implements Provider {
+  readonly name = "ollama";
+  readonly #apiUrl: string;
 
-export class CerebrasProvider implements Provider {
-  name = "cerebras";
-
-  isAvailable(env: Env): boolean {
-    return Boolean(env.CEREBRAS_API_KEY);
+  constructor(baseUrl: string = OLLAMA_DEFAULT_BASE_URL) {
+    const normalized = baseUrl.replace(/\/+$/, "");
+    this.#apiUrl = `${normalized}/chat/completions`;
   }
 
   async complete(opts: ProviderOptions): Promise<ChatCompletionResponse> {
-    const { env, request, model } = opts;
-    const apiKey = env.CEREBRAS_API_KEY!;
-
+    const { request, model } = opts;
     const body = buildBody(request, model, false);
-    const res = await openAICompatibleFetch(CEREBRAS_API_URL, apiKey, body);
+    const res = await openAICompatibleFetchNoAuth(this.#apiUrl, body);
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Cerebras error ${res.status}: ${text}`);
+      throw new Error(`Ollama error ${res.status}: ${text}`);
     }
 
     const data = (await res.json()) as ChatCompletionResponse;
@@ -35,16 +37,14 @@ export class CerebrasProvider implements Provider {
     return data;
   }
 
-  async stream(opts: ProviderOptions): Promise<ReadableStream> {
-    const { env, request, model } = opts;
-    const apiKey = env.CEREBRAS_API_KEY!;
-
+  async stream(opts: ProviderOptions): Promise<ReadableStream<Uint8Array>> {
+    const { request, model } = opts;
     const body = buildBody(request, model, true);
-    const res = await openAICompatibleFetch(CEREBRAS_API_URL, apiKey, body);
+    const res = await openAICompatibleFetchNoAuth(this.#apiUrl, body);
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Cerebras stream error ${res.status}: ${text}`);
+      throw new Error(`Ollama stream error ${res.status}: ${text}`);
     }
 
     const id = generateId();
@@ -65,6 +65,8 @@ function buildBody(
     ...(request.max_tokens !== undefined && { max_tokens: request.max_tokens }),
     ...(request.top_p !== undefined && { top_p: request.top_p }),
     ...(request.stop !== undefined && { stop: request.stop }),
+    ...(request.tools !== undefined && { tools: request.tools }),
+    ...(request.tool_choice !== undefined && { tool_choice: request.tool_choice }),
   };
 }
 
