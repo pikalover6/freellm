@@ -1,19 +1,34 @@
 {
   "name": "freellm",
   "version": "1.0.0",
-  "description": "A unified, free API for LLMs built on Cloudflare Workers",
-  "main": "index.js",
+  "description": "A unified, free JavaScript library for LLMs — calls provider APIs directly from the user's device for fully independent rate limits",
+  "main": "dist/freellm.umd.js",
+  "module": "dist/freellm.esm.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib/index.d.ts",
+      "import": "./dist/freellm.esm.js",
+      "require": "./dist/freellm.umd.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
   "scripts": {
+    "build": "npm run build:lib && npm run build:bundle",
+    "build:lib": "tsc -p tsconfig.lib.json",
+    "build:bundle": "node build.mjs",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "type-check": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "type-check": "tsc --noEmit && tsc -p tsconfig.lib.json --noEmit",
+    "lint": "tsc --noEmit && tsc -p tsconfig.lib.json --noEmit"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pikalover6/freellm.git"
   },
-  "keywords": ["llm", "api", "cloudflare", "workers", "free"],
+  "keywords": ["llm", "api", "cloudflare", "workers", "free", "browser", "groq", "cerebras", "google", "openrouter", "cohere"],
   "author": "",
   "license": "MIT",
   "bugs": {

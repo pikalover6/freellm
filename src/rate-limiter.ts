@@ -17,7 +17,6 @@ export async function checkRateLimit(
   ip: string,
   env: Env
 ): Promise<Response | null> {
-  // Rate limiting disabled
   const kv = env.RATE_LIMITS;
 
   const limitStr = env.RPM_LIMIT_PER_IP ?? String(DEFAULT_RPM);
