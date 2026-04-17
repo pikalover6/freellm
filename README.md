@@ -77,9 +77,11 @@ const client = new FreeLLM({
 });
 ```
 
+You can also set `model` in these object configs to control which model aliases use for that provider.
+
 ## Model IDs
 
-- Alias models: `auto`, `smart`, `fast`, `large`, `coding`, `no-key`
+- Alias models: `auto`, `smart`, `fast`, `large`, `coding`, `no-auth`
 - Provider-prefixed models: `groq/...`, `cerebras/...`, `google/...`, `openrouter/...`, `cohere/...`, `pollinations/...`, `ollama/...`, `lmstudio/...`, `llamacpp/...`
 
 Use `client.models()` to list currently available model IDs based on your config.

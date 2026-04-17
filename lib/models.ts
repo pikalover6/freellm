@@ -9,17 +9,25 @@ import {
   PollinationsProvider,
   POLLINATIONS_MODELS,
   POLLINATIONS_DEFAULT_BASE_URL,
+  POLLINATIONS_DEFAULT_MODEL,
 } from "./providers/pollinations.js";
-import { OllamaProvider, OLLAMA_MODELS, OLLAMA_DEFAULT_BASE_URL } from "./providers/ollama.js";
+import {
+  OllamaProvider,
+  OLLAMA_MODELS,
+  OLLAMA_DEFAULT_BASE_URL,
+  OLLAMA_DEFAULT_MODEL,
+} from "./providers/ollama.js";
 import {
   LMStudioProvider,
   LMSTUDIO_MODELS,
   LMSTUDIO_DEFAULT_BASE_URL,
+  LMSTUDIO_DEFAULT_MODEL,
 } from "./providers/lmstudio.js";
 import {
   LlamaCppProvider,
   LLAMACPP_MODELS,
   LLAMACPP_DEFAULT_BASE_URL,
+  LLAMACPP_DEFAULT_MODEL,
 } from "./providers/llamacpp.js";
 
 export interface ProviderModel {
@@ -53,23 +61,40 @@ export interface ActiveProviders {
   llamacpp?: LlamaCppProvider;
 }
 
-function resolveNoKeyProviderBaseUrl(
+function resolveNoKeyProviderConfig(
   value: ClientConfig["pollinations"] | undefined,
-  defaultBaseUrl: string
-): string | undefined {
+  defaultBaseUrl: string,
+  defaultModel: string
+): { baseUrl: string; model: string } | undefined {
   if (!value) return undefined;
-  if (value === true) return defaultBaseUrl;
-  return value.baseUrl ?? defaultBaseUrl;
+  if (value === true) return { baseUrl: defaultBaseUrl, model: defaultModel };
+  return {
+    baseUrl: value.baseUrl ?? defaultBaseUrl,
+    model: value.model ?? defaultModel,
+  };
 }
 
 export function createProviders(config: ClientConfig): ActiveProviders {
-  const pollinationsBaseUrl = resolveNoKeyProviderBaseUrl(
+  const pollinationsConfig = resolveNoKeyProviderConfig(
     config.pollinations,
-    POLLINATIONS_DEFAULT_BASE_URL
+    POLLINATIONS_DEFAULT_BASE_URL,
+    POLLINATIONS_DEFAULT_MODEL
   );
-  const ollamaBaseUrl = resolveNoKeyProviderBaseUrl(config.ollama, OLLAMA_DEFAULT_BASE_URL);
-  const lmstudioBaseUrl = resolveNoKeyProviderBaseUrl(config.lmstudio, LMSTUDIO_DEFAULT_BASE_URL);
-  const llamacppBaseUrl = resolveNoKeyProviderBaseUrl(config.llamacpp, LLAMACPP_DEFAULT_BASE_URL);
+  const ollamaConfig = resolveNoKeyProviderConfig(
+    config.ollama,
+    OLLAMA_DEFAULT_BASE_URL,
+    OLLAMA_DEFAULT_MODEL
+  );
+  const lmstudioConfig = resolveNoKeyProviderConfig(
+    config.lmstudio,
+    LMSTUDIO_DEFAULT_BASE_URL,
+    LMSTUDIO_DEFAULT_MODEL
+  );
+  const llamacppConfig = resolveNoKeyProviderConfig(
+    config.llamacpp,
+    LLAMACPP_DEFAULT_BASE_URL,
+    LLAMACPP_DEFAULT_MODEL
+  );
 
   return {
     ...(config.groq ? { groq: new GroqProvider(config.groq) } : {}),
@@ -77,10 +102,16 @@ export function createProviders(config: ClientConfig): ActiveProviders {
     ...(config.google ? { google: new GoogleProvider(config.google) } : {}),
     ...(config.openrouter ? { openrouter: new OpenRouterProvider(config.openrouter) } : {}),
     ...(config.cohere ? { cohere: new CohereProvider(config.cohere) } : {}),
-    ...(pollinationsBaseUrl ? { pollinations: new PollinationsProvider(pollinationsBaseUrl) } : {}),
-    ...(ollamaBaseUrl ? { ollama: new OllamaProvider(ollamaBaseUrl) } : {}),
-    ...(lmstudioBaseUrl ? { lmstudio: new LMStudioProvider(lmstudioBaseUrl) } : {}),
-    ...(llamacppBaseUrl ? { llamacpp: new LlamaCppProvider(llamacppBaseUrl) } : {}),
+    ...(pollinationsConfig
+      ? { pollinations: new PollinationsProvider(pollinationsConfig.baseUrl, pollinationsConfig.model) }
+      : {}),
+    ...(ollamaConfig ? { ollama: new OllamaProvider(ollamaConfig.baseUrl, ollamaConfig.model) } : {}),
+    ...(lmstudioConfig
+      ? { lmstudio: new LMStudioProvider(lmstudioConfig.baseUrl, lmstudioConfig.model) }
+      : {}),
+    ...(llamacppConfig
+      ? { llamacpp: new LlamaCppProvider(llamacppConfig.baseUrl, llamacppConfig.model) }
+      : {}),
   };
 }
 
@@ -107,10 +138,10 @@ export function buildModelRegistry(active: ActiveProviders): ModelEntry[] {
         [active.google, "gemini-2.5-flash"],
         [active.openrouter, "meta-llama/llama-3.3-70b-instruct:free"],
         [active.cohere, "command-a-03-2025"],
-        [active.pollinations, "openai"],
-        [active.ollama, "llama3.2"],
-        [active.lmstudio, "openai/gpt-oss-20b"],
-        [active.llamacpp, "local-model"],
+        [active.pollinations, active.pollinations?.defaultModel ?? POLLINATIONS_DEFAULT_MODEL],
+        [active.ollama, active.ollama?.defaultModel ?? OLLAMA_DEFAULT_MODEL],
+        [active.lmstudio, active.lmstudio?.defaultModel ?? LMSTUDIO_DEFAULT_MODEL],
+        [active.llamacpp, active.llamacpp?.defaultModel ?? LLAMACPP_DEFAULT_MODEL],
       ]),
     },
     {
@@ -122,10 +153,10 @@ export function buildModelRegistry(active: ActiveProviders): ModelEntry[] {
         [active.google, "gemini-2.5-flash"],
         [active.openrouter, "meta-llama/llama-3.3-70b-instruct:free"],
         [active.cohere, "command-a-03-2025"],
-        [active.pollinations, "openai"],
-        [active.ollama, "llama3.2"],
-        [active.lmstudio, "openai/gpt-oss-20b"],
-        [active.llamacpp, "local-model"],
+        [active.pollinations, active.pollinations?.defaultModel ?? POLLINATIONS_DEFAULT_MODEL],
+        [active.ollama, active.ollama?.defaultModel ?? OLLAMA_DEFAULT_MODEL],
+        [active.lmstudio, active.lmstudio?.defaultModel ?? LMSTUDIO_DEFAULT_MODEL],
+        [active.llamacpp, active.llamacpp?.defaultModel ?? LLAMACPP_DEFAULT_MODEL],
       ]),
     },
     {
@@ -136,10 +167,10 @@ export function buildModelRegistry(active: ActiveProviders): ModelEntry[] {
         [active.groq, "llama-3.1-8b-instant"],
         [active.google, "gemma-3-27b-it"],
         [active.openrouter, "google/gemma-3-27b-it:free"],
-        [active.pollinations, "openai-fast"],
-        [active.ollama, "phi3"],
-        [active.lmstudio, "meta-llama-3.1-8b-instruct"],
-        [active.llamacpp, "llama-3.1-8b-instruct"],
+        [active.pollinations, active.pollinations?.defaultModel ?? POLLINATIONS_DEFAULT_MODEL],
+        [active.ollama, active.ollama?.defaultModel ?? OLLAMA_DEFAULT_MODEL],
+        [active.lmstudio, active.lmstudio?.defaultModel ?? LMSTUDIO_DEFAULT_MODEL],
+        [active.llamacpp, active.llamacpp?.defaultModel ?? LLAMACPP_DEFAULT_MODEL],
       ]),
     },
     {
@@ -150,10 +181,10 @@ export function buildModelRegistry(active: ActiveProviders): ModelEntry[] {
         [active.groq, "llama-3.3-70b-versatile"],
         [active.openrouter, "nousresearch/hermes-3-llama-3.1-405b:free"],
         [active.cerebras, "llama-3.3-70b"],
-        [active.pollinations, "openai"],
-        [active.ollama, "llama3.2"],
-        [active.lmstudio, "qwen/qwen3-30b-a3b"],
-        [active.llamacpp, "qwen2.5-coder-7b-instruct"],
+        [active.pollinations, active.pollinations?.defaultModel ?? POLLINATIONS_DEFAULT_MODEL],
+        [active.ollama, active.ollama?.defaultModel ?? OLLAMA_DEFAULT_MODEL],
+        [active.lmstudio, active.lmstudio?.defaultModel ?? LMSTUDIO_DEFAULT_MODEL],
+        [active.llamacpp, active.llamacpp?.defaultModel ?? LLAMACPP_DEFAULT_MODEL],
       ]),
     },
     {
@@ -164,20 +195,20 @@ export function buildModelRegistry(active: ActiveProviders): ModelEntry[] {
         [active.groq, "llama-3.3-70b-versatile"],
         [active.openrouter, "mistralai/mistral-small-3.1-24b-instruct:free"],
         [active.cerebras, "llama-3.3-70b"],
-        [active.pollinations, "qwen-coder"],
-        [active.ollama, "qwen2.5-coder"],
-        [active.lmstudio, "qwen/qwen3-30b-a3b"],
-        [active.llamacpp, "qwen2.5-coder-7b-instruct"],
+        [active.pollinations, active.pollinations?.defaultModel ?? POLLINATIONS_DEFAULT_MODEL],
+        [active.ollama, active.ollama?.defaultModel ?? OLLAMA_DEFAULT_MODEL],
+        [active.lmstudio, active.lmstudio?.defaultModel ?? LMSTUDIO_DEFAULT_MODEL],
+        [active.llamacpp, active.llamacpp?.defaultModel ?? LLAMACPP_DEFAULT_MODEL],
       ]),
     },
     {
-      id: "no-key",
+      id: "no-auth",
       description: "No-API-key providers (public and local OpenAI-compatible endpoints)",
       providers: avail([
-        [active.pollinations, "openai"],
-        [active.ollama, "llama3.2"],
-        [active.lmstudio, "openai/gpt-oss-20b"],
-        [active.llamacpp, "local-model"],
+        [active.pollinations, active.pollinations?.defaultModel ?? POLLINATIONS_DEFAULT_MODEL],
+        [active.ollama, active.ollama?.defaultModel ?? OLLAMA_DEFAULT_MODEL],
+        [active.lmstudio, active.lmstudio?.defaultModel ?? LMSTUDIO_DEFAULT_MODEL],
+        [active.llamacpp, active.llamacpp?.defaultModel ?? LLAMACPP_DEFAULT_MODEL],
       ]),
     },
     // ── Provider-prefixed models ───────────────────────────────────────────

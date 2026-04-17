@@ -102,16 +102,29 @@ export interface ModelsResponse {
   data: ModelObject[];
 }
 
-export type NoKeyProviderConfig =
-  | boolean
-  | {
-      /** Override the provider base URL (must expose OpenAI-compatible /chat/completions). */
-      baseUrl?: string;
-    };
+/**
+ * Object-form configuration for no-key providers.
+ */
+export interface NoKeyProviderOptions {
+  /**
+   * Override the provider base URL (must expose OpenAI-compatible /chat/completions).
+   * If omitted, the provider's default base URL is used.
+   */
+  baseUrl?: string;
+  /**
+   * Override the model used for alias routes like `auto`, `fast`, and `no-auth`.
+   * If omitted, FreeLLM uses each provider's default model.
+   */
+  model?: string;
+}
+
+export type NoKeyProviderConfig = boolean | NoKeyProviderOptions;
 
 /**
  * Configuration for the FreeLLM client.
- * Provide at least one API key; providers without a key are skipped.
+ * Configure at least one API-key provider or one no-key provider.
+ * Providers without credentials are skipped; no-key providers are skipped unless set to `true`
+ * or enabled via an object config (with optional `baseUrl` override).
  * Optionally enable no-key providers (public or local OpenAI-compatible endpoints).
  */
 export interface ClientConfig {

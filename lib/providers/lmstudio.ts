@@ -1,6 +1,13 @@
-import type { ChatCompletionRequest, ChatCompletionResponse } from "../types.js";
+import type { ChatCompletionResponse } from "../types.js";
 import type { Provider, ProviderOptions } from "./base.js";
-import { generateId, openAICompatibleFetchNoAuth, buildSSEStream } from "./base.js";
+import {
+  generateId,
+  openAICompatibleFetchNoAuth,
+  buildSSEStream,
+  stripTrailingSlashes,
+  buildOpenAICompatibleBody,
+  extractOpenAIStreamDelta,
+} from "./base.js";
 
 export const LMSTUDIO_DEFAULT_BASE_URL = "http://127.0.0.1:1234/v1";
 
@@ -10,19 +17,25 @@ export const LMSTUDIO_MODELS = [
   "qwen/qwen3-30b-a3b",
   "meta-llama-3.1-8b-instruct",
 ] as const;
+export const LMSTUDIO_DEFAULT_MODEL = LMSTUDIO_MODELS[0];
 
 export class LMStudioProvider implements Provider {
   readonly name = "lmstudio";
+  readonly defaultModel: string;
   readonly #apiUrl: string;
 
-  constructor(baseUrl: string = LMSTUDIO_DEFAULT_BASE_URL) {
-    const normalized = baseUrl.replace(/\/+$/, "");
+  constructor(
+    baseUrl: string = LMSTUDIO_DEFAULT_BASE_URL,
+    defaultModel: string = LMSTUDIO_DEFAULT_MODEL
+  ) {
+    const normalized = stripTrailingSlashes(baseUrl);
     this.#apiUrl = `${normalized}/chat/completions`;
+    this.defaultModel = defaultModel;
   }
 
   async complete(opts: ProviderOptions): Promise<ChatCompletionResponse> {
     const { request, model } = opts;
-    const body = buildBody(request, model, false);
+    const body = buildOpenAICompatibleBody(request, model, false);
     const res = await openAICompatibleFetchNoAuth(this.#apiUrl, body);
 
     if (!res.ok) {
@@ -37,7 +50,7 @@ export class LMStudioProvider implements Provider {
 
   async stream(opts: ProviderOptions): Promise<ReadableStream<Uint8Array>> {
     const { request, model } = opts;
-    const body = buildBody(request, model, true);
+    const body = buildOpenAICompatibleBody(request, model, true);
     const res = await openAICompatibleFetchNoAuth(this.#apiUrl, body);
 
     if (!res.ok) {
@@ -46,38 +59,6 @@ export class LMStudioProvider implements Provider {
     }
 
     const id = generateId();
-    return buildSSEStream(id, model, res.body!, extractDelta);
-  }
-}
-
-function buildBody(
-  request: ChatCompletionRequest,
-  model: string,
-  stream: boolean
-): Record<string, unknown> {
-  return {
-    model,
-    messages: request.messages,
-    stream,
-    ...(request.temperature !== undefined && { temperature: request.temperature }),
-    ...(request.max_tokens !== undefined && { max_tokens: request.max_tokens }),
-    ...(request.top_p !== undefined && { top_p: request.top_p }),
-    ...(request.stop !== undefined && { stop: request.stop }),
-    ...(request.tools !== undefined && { tools: request.tools }),
-    ...(request.tool_choice !== undefined && { tool_choice: request.tool_choice }),
-  };
-}
-
-function extractDelta(data: string): string | null | "DONE" {
-  try {
-    const parsed = JSON.parse(data) as {
-      choices?: Array<{ delta?: { content?: string }; finish_reason?: string }>;
-    };
-    const choice = parsed.choices?.[0];
-    if (!choice) return null;
-    if (choice.finish_reason === "stop" || choice.finish_reason === "length") return "DONE";
-    return choice.delta?.content ?? null;
-  } catch {
-    return null;
+    return buildSSEStream(id, model, res.body!, extractOpenAIStreamDelta);
   }
 }
