@@ -45,6 +45,73 @@ export async function openAICompatibleFetch(
 }
 
 /**
+ * OpenAI-compatible fetch helper for providers that do not require an API key.
+ */
+export async function openAICompatibleFetchNoAuth(
+  url: string,
+  body: Record<string, unknown>,
+  extraHeaders: Record<string, string> = {}
+): Promise<Response> {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...extraHeaders,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Removes trailing slashes from a base URL while preserving root "/".
+ */
+export function stripTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 1 && value.charCodeAt(end - 1) === 47) {
+    end--;
+  }
+  return end === value.length ? value : value.slice(0, end);
+}
+
+/**
+ * Build standard OpenAI-compatible chat completion request body.
+ */
+export function buildOpenAICompatibleBody(
+  request: ChatCompletionRequest,
+  model: string,
+  stream: boolean
+): Record<string, unknown> {
+  return {
+    model,
+    messages: request.messages,
+    stream,
+    ...(request.temperature !== undefined && { temperature: request.temperature }),
+    ...(request.max_tokens !== undefined && { max_tokens: request.max_tokens }),
+    ...(request.top_p !== undefined && { top_p: request.top_p }),
+    ...(request.stop !== undefined && { stop: request.stop }),
+    ...(request.tools !== undefined && { tools: request.tools }),
+    ...(request.tool_choice !== undefined && { tool_choice: request.tool_choice }),
+  };
+}
+
+/**
+ * Extract content delta from OpenAI-compatible SSE chunk.
+ */
+export function extractOpenAIStreamDelta(data: string): string | null | "DONE" {
+  try {
+    const parsed = JSON.parse(data) as {
+      choices?: Array<{ delta?: { content?: string }; finish_reason?: string }>;
+    };
+    const choice = parsed.choices?.[0];
+    if (!choice) return null;
+    if (choice.finish_reason === "stop" || choice.finish_reason === "length") return "DONE";
+    return choice.delta?.content ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Extract the text content from a message's content field.
  */
 export function getTextContent(
